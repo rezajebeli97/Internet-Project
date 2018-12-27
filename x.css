@@ -1,0 +1,143 @@
+/*@font-face{
+   font-family:My Font; 
+   src: url(fonts/myfont.ttf)
+ }*/
+html {
+     overflow: -moz-scrollbars-vertical;
+     overflow: hidden;
+}
+body {
+	overflow: -moz-scrollbars-vertical;
+    overflow: hidden;
+    background: url("img/back.jpg") no-repeat center center fixed;
+    height: 100%; 
+    /* Center and scale the image nicely */
+    /*background-position: center;*/
+    /*background-repeat: no-repeat;*/
+    background-size: cover;
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    alignment-baseline: center;
+    vertical-align: center;
+    text-align: center;
+    text-align-last: center;
+}
+
+#main{
+	background: url("img/game1.jpg") no-repeat center center fixed;
+    height: 65%;
+    margin-left: 20%;
+    margin-right: 20%;
+    margin-top: 10%;
+    margin-bottom: 10%;
+    /*border: 3px solid red;*/
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    alignment-baseline: center;
+    vertical-align: center;
+    text-align: center;
+    text-align-last: center;
+}
+.rect1{
+    height: 20%;
+    width: 100%;
+    /*background-color: white;*/
+
+    display: flex;
+    justify-content: space-around;
+    /*border: 3px solid tomato;*/
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    alignment-baseline: center;
+    vertical-align: center;
+    text-align: center;
+    text-align-last: center;
+    font-family: 'AmericanTypewriter'
+}
+
+.rect2{
+    height: 40%;
+    width: 100%;
+    /*background-color: gray;*/
+
+    display: flex;
+    justify-content: space-around;
+    /*border: 3px solid tomato;*/
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    alignment-baseline: center;
+    vertical-align: center;
+    text-align: center;
+    text-align-last: center;
+    font-family: 'AmericanTypewriter';
+}
+
+.rect3{
+    height: 40%;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    /*background-color: red;*/
+    /*border: 3px solid tomato;*/
+    align-items: center;
+    align-self: center;
+    align-content: center;
+    alignment-baseline: center;
+    vertical-align: center;
+    text-align: center;
+    text-align-last: center;
+    font-family: 'AmericanTypewriter'
+}
+button{
+	background: transparent;
+	border: none;
+}
+
+/*span{
+	border: 3px solid green;
+}*/
+span.player{
+	font-size: 32px;
+}
+/*div{
+	border: 3px solid blue;
+}*/
+div.row{
+	display: flex;
+	justify-content: space-around;
+}
+div.playerScore{
+	margin-top:10%;
+	font-size: 60px;
+	color: rgb(255,59,51);
+}
+div.scoreBox{
+	padding: 1% 3%; 
+	background-color: rgb(255,59,51);
+}
+div.current{
+	font-size: 12px;
+}
+div.currentScore{
+	margin-top: 10%;
+	color: white;font-size: 30px
+}
+span{
+	font-family: 'AmericanTypewriter';
+	font-size: 16px;
+}
+input{
+	margin-top:15%; 
+	padding:5px 5px 5px 5px;
+	font-size: 100%;
+	text-align: center;
+	height: 30px;
+	width: 80px;
+	border-radius: 5px;
+	color: rgb(255,59,51);
+	font-size: 13px
+}

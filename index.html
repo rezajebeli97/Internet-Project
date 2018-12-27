@@ -1,0 +1,75 @@
+<html>
+
+<head>
+    <title>
+        Game
+    </title>
+    <link rel="stylesheet" type="text/css" href="x.css">
+</head>
+
+<body>
+    <div id="main">
+        <div class="rect1">
+            <div>
+                <button type="button" onclick="newGame()">
+                    <img src="img/267-plus.png" height="15px" width="15px" alt="plus">
+                    <span>NEW GAME</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="rect2">
+            <div style="margin-left:7%;">
+                <div class="row">
+                    <span id="player1" class="player">PLAYER 0</span>
+                    <img id="tik1" src="img/mark.jpg" height="18px" width="18px" alt="mark" style="margin-top: 11px;margin-left: 100px;position:absolute;">
+                </div>
+                <div id="playerScore1" class="playerScore">0</div>
+            </div>
+            <div>
+                <div>
+                    <img id="dice1" src="img/dice-2.png" height="80px" width="80px" alt="dice" style="display: none;">
+                </div>
+                <div style="margin-top: 30%">
+                    <img id="dice2" src="img/dice-2.png" height="80px" width="80px" alt="dice" style="display: none;">
+                </div>
+            </div>
+            <div style="margin-right:7%;">
+                <div class="row">
+                    <img id="tik2" hidden="hidden" src="img/mark.jpg" height="18px" width="18px" alt="mark" style="margin-top: 11px;position: absolute; margin-left: -100px;">
+                    <span id="player2" class="player">PLAYER 1</span>
+                </div>
+                <div id="playerScore2" class="playerScore">0</div>
+            </div>
+        </div>
+
+
+        <div class="rect3">
+            <div class="scoreBox" style="margin:5% 5% 5% 13%;">
+                <div class="current">CURRENT</div>
+                 <div id="currentScore1" class="currentScore">0</div>
+            </div>
+            <div style="margin-bottom: 3%">
+                <div style="margin-top: 15%">
+                    <button id="rolldice" type="button" onclick="rollDice()">
+                        <img src="img/303-loop2.png" height="15px" width="15px" alt="plus">
+                        <span>ROLL DICE</span>
+                    </button>
+                </div>
+                <div style="margin-top: 15%">
+                    <button id="hold" type="button" onclick="hold()">
+                        <img src="img/286-pause2.png" height="15px" width="15px" alt="plus">
+                        <span>HOLD</span>
+                    </button>
+                </div>
+                <input id="inp" type="text" value="score"></input>
+            </div>
+            <div class="scoreBox" style="margin:5% 13% 5% 5%;">
+                <div class="current">CURRENT</div>
+                 <div id="currentScore2" class="currentScore">0</div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
