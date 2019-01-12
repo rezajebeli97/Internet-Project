@@ -10,7 +10,7 @@ body {
 	overflow: -moz-scrollbars-vertical;
     overflow: hidden;
     background: url("img/back.jpg") no-repeat center center fixed;
-    height: 99%; 
+    height: 100%; 
     /* Center and scale the image nicely */
     /*background-position: center;*/
     /*background-repeat: no-repeat;*/
