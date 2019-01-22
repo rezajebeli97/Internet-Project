@@ -4,7 +4,7 @@ import random
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 # Create your views here.
-from friendship.models import FriendshipRequest
+from friendship.models import FriendshipRequest, Friend
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import ListAPIView, ListCreateAPIView
 from rest_framework.request import Request
@@ -16,6 +16,7 @@ from Code.urls import onlineUsers, games, non_started_games
 from Final.models import Game, GameData, GameComment, UserComment
 from Final.serializers import GameSerializer, GameRateSerializer, GamePlayedCountSerializer, GameCommentSerializer, \
     GameAcceptCommentSerializer, UserAcceptCommentSerializer, UserCommentSerializer
+from User.models import User
 from User.permissions import IsAuthenticated, Authenticate
 
 
@@ -28,11 +29,14 @@ class HomePage(APIView):
         return render(request, 'home.html', {'onlineUsers': onlineUsers, 'curUser': request.user,
                                              'games': Game.objects.all(),
                                              'bestGame': Game.objects.values('rate', 'name').order_by('-rate')[0],
-                                             'maxOnline': 0,
+                                             'maxOnline': 0,  # max([len(x) for x in games]),
                                              'bestNewGame': Game.objects.all().order_by('-creation_date', '-rate')[0],
                                              'isAdmin': request.auth, 'user_comment': UserComment.objects.all(),
                                              'game_comment': GameComment.objects.all(),
-                                             'friendship': FriendshipRequest.objects.filter(to_user=request.user.id)})
+                                             'friendship': FriendshipRequest.objects.filter(to_user=request.user.id),
+                                             'friends': User.objects.filter(
+                                                 id__in=Friend.objects.filter(to_user=request.user.id).values(
+                                                     'from_user_id'))})
 
 
 class GameView(APIView):
@@ -44,13 +48,13 @@ class GameView(APIView):
         game_id = request.query_params.get('id')
         # my_turn = request.query_params.get('p')
         if not game_id:
-            return render(request, 'game_list.html')
+            return render(request, 'game_list.html', {'games': Game.objects.all(), 'curUser': request.user})
             # raise NotFound('Game not found!')
         game = Game.objects.get(id=game_id)
         if not game:
             raise NotFound('Game not found!')
-        if len(non_started_games) > 0:
-            cur_game: GameData = non_started_games.pop()
+        if non_started_games.get(game_id) and len(non_started_games[game_id]) > 0:
+            cur_game: GameData = non_started_games[game_id].pop()
             cur_game.turn = True
             cur_game.player2_id = request.user.id
             cur_game.started = True
@@ -59,8 +63,11 @@ class GameView(APIView):
 
         new_game = GameData(game.dice_count, game.max_score, [int(x) for x in game.hold.split(',')])
         new_game.player1_id = request.user.id
-        games[new_game.id] = new_game
-        non_started_games.append(new_game)
+        if games.get(game_id):
+            games[game_id][new_game.id] = new_game
+        else:
+            games[game_id] = {new_game.id: new_game}
+        non_started_games[game_id] = [new_game]
         return render(request, 'game_main.html',
                       {'game': game, 'game_id': new_game.id, 'myTurn': 1, 'myUserID': request.user.id})
 
@@ -68,11 +75,12 @@ class GameView(APIView):
     def post(request: Request):
         action = request.data.get('action')
         game_id = request.data.get('game_id')
+        gid = request.data.get('gid')
         if not game_id:
             raise ValidationError('game_id not found')
         if not action:
             raise ValidationError('action not found')
-        game: GameData = games.get(game_id)
+        game: GameData = games.get(gid).get(game_id)
         if not game:
             raise NotFound('game not found')
         if action == 'roll-dice':
@@ -182,15 +190,44 @@ class AcceptUserComment(APIView):
 class EndGameAPI(APIView):
     @staticmethod
     def get(request: Request):
-        non_started_games.pop()
-        del games[request.query_params.get('id')]
+        game_id = request.query_params.get('gid')
+        non_started_games[game_id].pop()
+        del games[game_id][request.query_params.get('id')]
         return Response("timeout")
 
     @staticmethod
     def post(request: Request):
-        return Response()
+        gid = request.data.get('gid')
+        game_id = request.data.get('id')
+        print(request.data,gid,game_id)
+        game_db = Game.objects.get(id=gid)
+        game: GameData = games[gid][game_id]
+        game_db.max_score = max(game_db.max_score, game.player1_total, game.player2_total)
+        game_db.average_score = (game_db.average_score_person_count * game_db.average_score +
+                                 max(game.player2_total, game.player1_total)) / (game_db.average_score_person_count + 1)
+        game_db.average_score_person_count = game_db.average_score_person_count + 1
+        game_db.save()
+        user = User.objects.get(id=game.player1_id)
+        user.average_game_score = (user.average_game_score * user.average_game_score_count + game.player1_total) / (
+                    user.average_game_score_count + 1)
+        user.games_count = user.games_count + 1
+        user.save()
+        user = User.objects.get(id=game.player2_id)
+        user.average_game_score = (user.average_game_score * user.average_game_score_count + game.player2_total) / (
+                user.average_game_score_count + 1)
+        user.games_count = user.games_count + 1
+        user.save()
+        del games[gid][game_id]
+        return Response('Done')
 
-# # class Friend
-# @APIView(['GET'])
-# def temp(request,username):
-#     username
+
+class UserProfile(APIView):
+    authentication_classes = (Authenticate,)
+    permission_classes = (IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        return render(request, 'user_profile.html', {
+            'user': User.objects.get(id=request.query_params.get('id')),
+            'curUser': request.user
+        })

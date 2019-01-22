@@ -7,18 +7,18 @@
 {% endblock %}
 
 {% block header %}
-    <h1 class="page-header">HomePage</h1>
+    <h1 class="page-header panel-red">Dear {{curUser}}, welcome to your homepage</h1>
 {% endblock header %}
 
 
 {% block body %}
-    <div class="col-lg-8">
-        <div class="panel panel-default">
+    <div class="col-lg-10">
+        <div class="panel panel-info">
             <div class="panel-heading">
-                <i class="fa fa-sliders fa-fw"></i> Games News
+                <i class="fa fa-sliders fa-adn"></i> Games News
             </div>
             <!-- /.panel-heading -->
-            <div class="panel-body">
+            <div class="panel-collapse">
                 <!-- slider -->
                 <div id="slider-homepage" class="carousel slide" data-ride="carousel">
                     <!-- Indicators -->
@@ -31,7 +31,7 @@
                     <!-- Wrapper for slides -->
                     <div class="carousel-inner">
                         <div class="item active">
-                            <div class="panel panel-green">
+                            <div class="panel panel-red">
                                 <div class="panel-heading">
                                     BestGame
                                 </div>
@@ -44,7 +44,7 @@
                         </div>
                         <div class="item">
                             <div class="item active">
-                                <div class="panel panel-green">
+                                <div class="panel panel-red">
                                     <div class="panel-heading">
                                         BestGame
                                     </div>
@@ -59,7 +59,7 @@
                         </div>
                         <div class="item">
                             <div class="item active">
-                                <div class="panel panel-green">
+                                <div class="panel panel-red">
                                     <div class="panel-heading">
                                         BestNewGame
                                     </div>
@@ -89,7 +89,7 @@
         </div>
         <!-- /.panel -->
 
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading">
                 <i class="fa fa-sliders fa-fw"></i> Games
             </div>
@@ -109,7 +109,7 @@
             <!-- /.panel-body -->
         </div>
         {% if isAdmin %}
-            <div class="panel panel-default">
+            <div class="panel panel-info">
                 <div class="panel-heading">
                     <i class="fa fa-sliders fa-fw"></i> User Comments
                 </div>
@@ -152,7 +152,7 @@
                 </div>
                 <!-- /.panel-body -->
             </div>
-            <div class="panel panel-default">
+            <div class="panel panel-info">
                 <div class="panel-heading">
                     <i class="fa fa-sliders fa-fw"></i> Game Comments
                 </div>
@@ -195,7 +195,7 @@
     </div>
     <!-- /.col-lg-8 -->
     <div class="col-lg-4">
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading">
                 <i class="fa fa-bell fa-fw"></i> OnlineUser
             </div>
@@ -205,14 +205,21 @@
                 {% for onlineUser in onlineUsers %}
                     <div class="list-group">
                         <a href="#" class="list-group-item">
-                            <i class="fa fa-user fa-fw"></i> {{ onlineUser.username }}
-                            <form action="{% url 'friendship_add_friend' to_username=onlineUser.username %}"
-                                  method="post">
-                                {% csrf_token %}
-                                <input type="hidden" name="friend" value="{{ onlineUser.id }}">
-                                <button type="submit" class="btn btn-primary">Add Friend!
-                                </button>
-                            </form>
+                            {% if onlineUser in friends %}
+                                <i class="fa fa-user fa-fw"></i> <span class="friend">{{ onlineUser.username }}</span>
+                            {% else %}
+                                <i class="fa fa-user fa-fw"></i> {{ onlineUser.username }}
+                                {% if curUser.username != onlineUser.username %}
+                                    <form action="{% url 'friendship_add_friend' to_username=onlineUser.username %}"
+                                          method="post">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="friend" value="{{ onlineUser.id }}">
+                                        <button type="submit" class="btn btn-primary">Add Friend!
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            {% endif %}
+
                             {#                            <span class="pull-right text-muted small"><em>4 minutes ago</em>#}
                             {#                                    </span>#}
                         </a>
@@ -226,7 +233,7 @@
         <!-- /.panel -->
     </div>
     <div class="col-lg-4">
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading">
                 <i class="fa fa-bell fa-fw"></i> Friends
             </div>
@@ -249,16 +256,12 @@
         <!-- /.panel -->
     </div>
     <div class="col-lg-4">
-        <div class="panel panel-default">
+        <div class="panel panel-info">
             <div class="panel-heading">
                 <i class="fa fa-bell fa-fw"></i> Friend Requests
             </div>
             <!-- /.panel-heading -->
             <div class="panel-body">
-                <h1>friends</h1>
-                {% friends request.user %}
-                <h1>req</h1>
-                {#                {% friend_requests request.user %}#}
                 {% for req in friendship %}
                     <h1>{{ req.from_user.username }}</h1>
                     <form method="post" action="{% url 'friendship_accept' friendship_request_id=req.id %}">
