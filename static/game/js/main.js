@@ -1,4 +1,11 @@
 let turn = 1;
+let waiting = 0;
+let started = false;
+let user_rating = 0;
+let game_rating = 0;
+let opponent_user_id = 0;
+let db_game_id = 0;
+let winner = null;
 $(document).ready(function () {
     // $('#maxScore').hide();
     newGame();
@@ -10,8 +17,27 @@ $(document).ready(function () {
         update('hold')
     });
     interval();
+    const urlParams = new URLSearchParams(window.location.search);
+    db_game_id = urlParams.get('id');
+    $('#rating-user').stars({
+        stars: 5,
+        click: function (i) {
+            user_rating = i;
+        }
+
+    });
+    $('#rating-game').stars({
+        stars: 5,
+        click: function (i) {
+            game_rating = i;
+        }
+    });
+
+    $('#game-comment-button').on('click', sendGameComment);
+    $('#user-comment-button').on('click', sendUserComment);
 
 });
+
 
 function newGame() {
     for (let i = 1; i <= dice_count; i++) {
@@ -25,74 +51,30 @@ function newGame() {
     name2.css('color', 'black');
 }
 
-function randomDice() {
-    return Math.floor((Math.random() * 6) + 1);
-}
 
-function changeTrun() {
+function changeTurn() {
     $('.playerCard').toggleClass('itsTurn');
     $('.turn').find('i').toggleClass('hide-dot');
     turn = turn === 1 ? 2 : 1;
 }
 
-function rollDice() {
-    let change_turn = false;
-    let current = 0;
-    for (let i = 1; i <= dice_count; i++) {
-        let random = randomDice();
-        $(`#dice${i}`).attr('src', `/static/game/img/dice-${random}.png`);
-        current += random;
-        if (hold_number.includes(random)) {
-            change_turn = true;
-        }
-    }
-    if (change_turn) {
-        score()
-    } else {
-        score(current)
-    }
-}
-
-function score(num1) {
-    let score = $(`\.player${turn}`).find('.totalScoreNumber');
-    if (num1 === undefined) {
-        changeTrun();
-        score.html(0);
-        return;
-    }
-    // alert(num1 + ' ' + num2);
-    let value = parseInt(score.html()) + num1;
-    score.html(value.toString())
-}
-
-function hold() {
-    let playerCard = $(`\.player${turn}`);
-    let currentScore = playerCard.find('.totalScoreNumber');
-    let score = playerCard.find('.score');
-    let value = parseInt(score.html()) + parseInt(currentScore.html());
-    score.html(value);
-    currentScore.html(0);
-
-    if (value > maxScore) {
-        $('#rollDice').off('click');
-        $('#hold').off('click');
-        let name = $(`.player${turn}`).find('.playerName');
-        name.html('Winner!');
-        name.css('color', 'red');
-        return;
-    }
-    changeTrun();
-}
 
 
 function showData(data) {
+    started = data.started;
+    if (myUserID === data.player1_id) {
+        opponent_user_id = data.player2_id;
+    } else {
+        opponent_user_id = data.player1_id;
+    }
     if (data.winner !== null) {
-        let winner = data.winner ? 1 : 2;
+        winner = data.winner ? 1 : 2;
         $('#rollDice').off('click');
         $('#hold').off('click');
         let name = $(`.player${winner}`).find('.playerName');
         name.html('Winner!');
         name.css('color', 'red');
+        $('#game-comment-modal').modal({backdrop: 'static', keyboard: false});
         return;
     }
     // console.log(data);
@@ -103,7 +85,7 @@ function showData(data) {
         }
 
     if ((data.turn && turn === 2) || ((!data.turn) && turn === 1)) {
-        changeTrun();
+        changeTurn();
     }
     $('#max-score').val(data.max_score);
     let player1 = $('.player1');
@@ -136,7 +118,61 @@ function update(action) {
     })
 }
 
+function showTimeout() {
+    $.ajax({
+        url: '/end_game?id=' + game_id,
+        type: 'GET',
+        success: function (e) {
+            $('#timeout-modal').modal({backdrop: 'static', keyboard: false})
+        },
+        error: function (e) {
+            waiting = 0;
+            setTimeout(interval, 1000);
+        }
+    });
+}
+
 function interval() {
     update();
-    setTimeout(interval, 1000);
+    waiting++;
+    if ((!started) && waiting > 120) {
+        showTimeout();
+        return;
+    }
+    if (winner === null)
+        setTimeout(interval, 1000);
+}
+
+function sendGameComment() {
+    $.ajax({
+        url: '/game_comment',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            text: $('#game-comment-input').val(),
+            rate: game_rating,
+            game: db_game_id,
+            user: myUserID
+        })
+    });
+    $('#game-comment-modal').modal('hide');
+    $('#user-comment-modal').modal({backdrop: 'static', keyboard: false});
+}
+
+function sendUserComment() {
+    $.ajax({
+        url: '/user_comment',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            text: $('#user-comment-input').val(),
+            rate: user_rating,
+            game: db_game_id,
+            user: myUserID,
+            to_user: opponent_user_id
+        }),
+        success: function () {
+            window.location.replace('/');
+        }
+    });
 }

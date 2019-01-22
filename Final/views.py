@@ -1,17 +1,21 @@
 import json
 import random
 
+from django.http import HttpResponseRedirect
 from django.shortcuts import render
 # Create your views here.
+from friendship.models import FriendshipRequest
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.generics import ListAPIView, ListCreateAPIView
 from rest_framework.request import Request
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 from rest_framework.views import APIView
 
 from Code.urls import onlineUsers, games, non_started_games
-from Final.models import Game, GameData, GameComment
-from Final.serializers import GameSerializer, GameRateSerializer, GamePlayedCountSerializer, GameCommentSerializer
+from Final.models import Game, GameData, GameComment, UserComment
+from Final.serializers import GameSerializer, GameRateSerializer, GamePlayedCountSerializer, GameCommentSerializer, \
+    GameAcceptCommentSerializer, UserAcceptCommentSerializer, UserCommentSerializer
 from User.permissions import IsAuthenticated, Authenticate
 
 
@@ -25,11 +29,14 @@ class HomePage(APIView):
                                              'games': Game.objects.all(),
                                              'bestGame': Game.objects.values('rate', 'name').order_by('-rate')[0],
                                              'maxOnline': 0,
-                                             'bestNewGame': Game.objects.all().order_by('-creation_date', '-rate')[0]})
+                                             'bestNewGame': Game.objects.all().order_by('-creation_date', '-rate')[0],
+                                             'isAdmin': request.auth, 'user_comment': UserComment.objects.all(),
+                                             'game_comment': GameComment.objects.all(),
+                                             'friendship': FriendshipRequest.objects.filter(to_user=request.user.id)})
 
 
 class GameView(APIView):
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
     authentication_classes = (Authenticate,)
 
     @staticmethod
@@ -43,15 +50,19 @@ class GameView(APIView):
         if not game:
             raise NotFound('Game not found!')
         if len(non_started_games) > 0:
-            cur_game = non_started_games.pop()
+            cur_game: GameData = non_started_games.pop()
             cur_game.turn = True
+            cur_game.player2_id = request.user.id
+            cur_game.started = True
             return render(request, 'game_main.html',
-                          {'game': game, 'game_id': cur_game.id, 'myTurn': 2})
+                          {'game': game, 'game_id': cur_game.id, 'myTurn': 2, 'myUserID': request.user.id})
 
         new_game = GameData(game.dice_count, game.max_score, [int(x) for x in game.hold.split(',')])
+        new_game.player1_id = request.user.id
         games[new_game.id] = new_game
         non_started_games.append(new_game)
-        return render(request, 'game_main.html', {'game': game, 'game_id': new_game.id, 'myTurn': 1})
+        return render(request, 'game_main.html',
+                      {'game': game, 'game_id': new_game.id, 'myTurn': 1, 'myUserID': request.user.id})
 
     @staticmethod
     def post(request: Request):
@@ -136,7 +147,50 @@ class BestGameAddedAPI(ListAPIView):
         return Game.objects.all().order_by('creation_date', 'rate')
 
 
-class CommentAPI(ListCreateAPIView):
+class GameCommentAPI(ListCreateAPIView):
     authentication_classes = (Authenticate,)
     serializer_class = GameCommentSerializer
     queryset = GameComment.objects.all()
+
+
+class UserCommentAPI(ListCreateAPIView):
+    authentication_classes = (Authenticate,)
+    serializer_class = UserCommentSerializer
+    queryset = UserComment.objects.all()
+
+
+class AcceptGameComment(APIView):
+    @staticmethod
+    def post(request: Request):
+        ser = GameAcceptCommentSerializer(data=request.data)
+        ser.is_valid(True)
+        vd = ser.validated_data
+        GameComment.objects.filter(id__in=vd['game_comment']).update(accept=True)
+        return HttpResponseRedirect(redirect_to=reverse('homepage'))
+
+
+class AcceptUserComment(APIView):
+    @staticmethod
+    def post(request: Request):
+        ser = UserAcceptCommentSerializer(data=request.data)
+        ser.is_valid(True)
+        vd = ser.validated_data
+        UserComment.objects.filter(id__in=vd['user_comment']).update(accept=True)
+        return HttpResponseRedirect(redirect_to=reverse('homepage'))
+
+
+class EndGameAPI(APIView):
+    @staticmethod
+    def get(request: Request):
+        non_started_games.pop()
+        del games[request.query_params.get('id')]
+        return Response("timeout")
+
+    @staticmethod
+    def post(request: Request):
+        return Response()
+
+# # class Friend
+# @APIView(['GET'])
+# def temp(request,username):
+#     username

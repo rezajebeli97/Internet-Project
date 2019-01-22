@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from Code.urls import onlineUsers
 from User.models import User
-from User.permissions import IsAuthenticated, Authenticate
+from User.permissions import Authenticate
 from User.serializers import UserLoginSerializer, UserRegisterSerializer
 
 
@@ -39,6 +39,7 @@ class Login(ObtainAuthToken):
 
 class LogOut(APIView):
     authentication_classes = (Authenticate,)
+
     @staticmethod
     def get(request):
         try:
@@ -57,4 +58,3 @@ class SignUp(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return HttpResponseRedirect(redirect_to=reverse('login'))
-
